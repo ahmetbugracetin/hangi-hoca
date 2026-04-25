@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Department {
+  id          Int          @id @default(autoincrement())
+  name        String
+  code        String       @unique
+  university  String       @default("ODTU")
+  instructors Instructor[]
+  courses     Course[]
+}
+
+model Instructor {
+  id           Int              @id @default(autoincrement())
+  name         String
+  title        String
+  email        String?          @unique
+  photoUrl     String?
+  avesisUrl    String?          @unique
+  departmentId Int
+  department   Department       @relation(fields: [departmentId], references: [id])
+  reviews      Review[]
+  sections     CourseSection[]
+  slug         String           @unique
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model Course {
+  id           Int              @id @default(autoincrement())
+  code         String           @unique
+  name         String
+  credits      Int?
+  departmentId Int
+  department   Department       @relation(fields: [departmentId], references: [id])
+  sections     CourseSection[]
+  reviews      Review[]
+}
+
+model CourseSection {
+  id           Int        @id @default(autoincrement())
+  courseId      Int
+  instructorId Int
+  semester     String
+  course       Course     @relation(fields: [courseId], references: [id])
+  instructor   Instructor @relation(fields: [instructorId], references: [id])
+
+  @@unique([courseId, instructorId, semester])
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  passwordHash    String
+  studentIdHash   String?
+  isVerified      Boolean   @default(false)
+  verifyToken     String?
+  reviews         Review[]
+  createdAt       DateTime  @default(now())
+}
+
+model Review {
+  id           Int        @id @default(autoincrement())
+  instructorId Int
+  courseId      Int
+  userId       Int
+  semester     String
+  clarity      Int
+  fairness     Int
+  workload     Int
+  attendance   Boolean
+  wouldRetake  Boolean
+  comment      String     @db.Text
+  upvotes      Int        @default(0)
+  downvotes    Int        @default(0)
+  isAnonymous  Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  instructor   Instructor @relation(fields: [instructorId], references: [id])
+  course       Course     @relation(fields: [courseId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+
+  @@unique([userId, instructorId, courseId, semester])
+}
