@@ -1,0 +1,32 @@
+# Environment variables - never commit
+.env
+.env.local
+.env.production
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+
+# TypeScript
+tsconfig.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
