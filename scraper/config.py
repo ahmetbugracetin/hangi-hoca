@@ -44,6 +44,20 @@ DEPARTMENT_CONFIG = {
     "454": {"code": "EDS", "name": "Eğitim Bilimleri"},
 }
 
+# SIS programs that are not on the Ankara campus and are skipped:
+# 350-399 are METU Northern Cyprus Campus (KKK/NCC) programs, 575 is the
+# Türkiye-Azerbaijan University (TAU) joint program. Their names duplicate the
+# Ankara departments (e.g. 355-CNG vs 571-CENG "Computer Engineering").
+EXCLUDED_PROGRAM_IDS = {str(i) for i in range(350, 400)} | {"575"}
+
+# Course names that SIS lists under a coordinator rather than a teaching
+# instructor (theses, summer practice, special/advanced studies, seminars...).
+# These are not stored, so they never appear on instructor pages.
+COORDINATION_COURSE_RE = (
+    r"thesis|dissertation|special stud|advanced? stud|summer practice"
+    r"|term project|seminar|^special topics?$"
+)
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }

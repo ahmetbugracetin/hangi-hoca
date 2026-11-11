@@ -20,8 +20,10 @@ import requests
 from bs4 import BeautifulSoup
 
 from config import (
+    COORDINATION_COURSE_RE,
     DATABASE_URL,
     DEPARTMENT_CONFIG,
+    EXCLUDED_PROGRAM_IDS,
     HEADERS,
     REQUEST_DELAY,
     SIS_BASE,
@@ -33,6 +35,14 @@ from config import (
 logger = logging.getLogger("sis_scraper")
 
 PROGRAM_OPTION_RE = re.compile(r"^(?P<sis_id>\d+)-(?P<code>[A-Z0-9]+)-(?P<name>.+)$")
+COORDINATION_COURSE_PATTERN = re.compile(COORDINATION_COURSE_RE, re.IGNORECASE)
+
+
+def is_coordination_course(course_name: str) -> bool:
+    """True for courses SIS assigns to a coordinator (thesis, summer practice...)."""
+    return bool(COORDINATION_COURSE_PATTERN.search(" ".join(course_name.split())))
+
+
 PLACEHOLDER_INSTRUCTOR_NAMES = {
     "STAFF",
     "TBA",
@@ -303,6 +313,9 @@ def upsert_data(
     sections: list[dict] = []
 
     for row in rows:
+        if is_coordination_course(row["course_name"]):
+            continue
+
         # Instructor
         raw_name = row["instructor_name"]
         name = normalize_name(raw_name)
@@ -406,6 +419,20 @@ def scrape_all() -> dict[str, dict]:
 
     try:
         session, stamp, programs = get_sis_session()
+        programs = {
+            sis_id: info
+            for sis_id, info in programs.items()
+            if sis_id not in EXCLUDED_PROGRAM_IDS
+        }
+
+        # Several SIS programs share a name (e.g. four "Music and Fine Arts");
+        # add the code so they don't look like duplicates on the site.
+        name_counts: dict[str, int] = {}
+        for info in programs.values():
+            name_counts[info["name"]] = name_counts.get(info["name"], 0) + 1
+        for info in programs.values():
+            if name_counts[info["name"]] > 1:
+                info["name"] = f'{info["name"]} ({info["code"]})'
 
         for sis_id, dept_info in programs.items():
             dept_code = dept_info["code"]
